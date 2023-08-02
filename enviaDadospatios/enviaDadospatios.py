@@ -5,7 +5,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 def criar_tabela_dados(dados):
-    # Escolha as colunas que deseja exibir na tabela (exceto 'EmailTo' e 'EmailCC')
     colunas_exibir = ['PLACA', 'CHASSI', 'MODELO', 'PATIO', 'RESPONSAVEL', 'CPF', 'RG', 'TELEFONE']
     tabela_formatada = dados[colunas_exibir].to_html(index=False, border=1, classes='dataframe')
     return tabela_formatada
@@ -22,8 +21,8 @@ def enviar_email(destinatario, assunto, corpo_email, cc=None):
     host = 'smtp.gmail.com'
     porta = 587
 
-    usuario = 'xxxxxx'
-    senha = 'xxxxxxx'
+    usuario = 'xxxxxxxxxxxx'  # Substitua pelo seu e-mail
+    senha = 'xxxxxxxxxxxx'  # Substitua pela sua senha do e-mail
 
     context = ssl.create_default_context()
 
@@ -39,14 +38,19 @@ def enviar_email(destinatario, assunto, corpo_email, cc=None):
     mensagem['To'] = destinatario
     if cc:
         cc_str = ', '.join(cc)
-        mensagem['Bcc'] = cc_str
+        mensagem['Cc'] = cc_str
         # Remove os destinatários e cópias do corpo do e-mail
         corpo_email = corpo_email.replace(destinatario, '').replace(cc_str, '')
     mensagem['Subject'] = assunto
     mensagem.attach(MIMEText(corpo_email, 'html'))
-    server.sendmail(usuario, [destinatario] + cc, mensagem.as_string())
+    server.sendmail(usuario, [destinatario] + cc.split(',') if cc else [], mensagem.as_string())
 
     server.quit()
+
+def limpar_espacos_brancos(emails):
+    # Função para remover espaços extras de cada e-mail
+    emails_limpos = [email.strip() for email in emails.split(',')]
+    return ','.join(emails_limpos)
 
 # Carregando os dados da planilha usando o pandas
 dados = pd.read_excel(r"E:\\libera_meucarro\dadoscoletados.xlsx")
@@ -65,13 +69,16 @@ for nome_patio, grupo_dados in grupos_patio:
     corpo_tabela = criar_tabela_dados(grupo_dados)
     corpo_email = criar_corpo_email(nome_patio, corpo_tabela)
 
-    # Enviando e-mails para os destinatários listados na planilha (coluna 'EmailTo')
-    for _, row in grupo_dados.iterrows():
-        destinatarios_to = row['EmailTo'].split(',')  # Divide a string em uma lista de destinatários To
-        destinatarios_cc = row['EmailCC'].split(',') if 'EmailCC' in dados.columns and pd.notna(row['EmailCC']) else []  # Divide a string em uma lista de destinatários CC
+    # Coletando todos os e-mails da coluna 'EmailTo' em uma única string
+    destinatarios_to = ','.join(grupo_dados['EmailTo'].apply(limpar_espacos_brancos))
 
-        # Enviando email para cada destinatário To e CC
-        for destinatario_email in destinatarios_to:
-            enviar_email(destinatario_email.strip(), f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=destinatarios_cc)
+    # Verificando se há e-mails CC
+    if 'EmailCC' in dados.columns:
+        destinatarios_cc = ','.join(grupo_dados['EmailCC'].apply(limpar_espacos_brancos))
+    else:
+        destinatarios_cc = ''
+
+    # Enviando o e-mail para todos os destinatários To e CC de uma única vez
+    enviar_email(destinatarios_to, f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=destinatarios_cc)
 
 print("E-mails enviados com sucesso!")
