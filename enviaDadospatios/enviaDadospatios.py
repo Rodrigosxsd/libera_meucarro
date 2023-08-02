@@ -22,14 +22,17 @@ def enviar_email(destinatario, assunto, corpo_email, cc=None):
     host = 'smtp.gmail.com'
     porta = 587
 
-    usuario = 'rodrigo.menezes@napista.com.br'
-    senha = 'Ro055662400'
+    usuario = 'xxxxxx'
+    senha = 'xxxxxxx'
 
     context = ssl.create_default_context()
 
     server = smtplib.SMTP(host, porta)
     server.starttls(context=context)
     server.login(usuario, senha)
+
+    limite_tamanho_assunto = 500
+    assunto = assunto[:limite_tamanho_assunto]
 
     mensagem = MIMEMultipart()
     mensagem['From'] = usuario
@@ -62,10 +65,13 @@ for nome_patio, grupo_dados in grupos_patio:
     corpo_tabela = criar_tabela_dados(grupo_dados)
     corpo_email = criar_corpo_email(nome_patio, corpo_tabela)
 
-    # Enviando e-mails para os destinatários listados na planilha (coluna 'EmailTo') e também adicionando cópia para 'EmailCC'
+    # Enviando e-mails para os destinatários listados na planilha (coluna 'EmailTo')
     for _, row in grupo_dados.iterrows():
-        destinatario_email = row['EmailTo']
-        cc_email = row['EmailCC'] if 'EmailCC' in dados.columns else None
-        enviar_email(destinatario_email, f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=[cc_email])
+        destinatarios_to = row['EmailTo'].split(',')  # Divide a string em uma lista de destinatários To
+        destinatarios_cc = row['EmailCC'].split(',') if 'EmailCC' in dados.columns and pd.notna(row['EmailCC']) else []  # Divide a string em uma lista de destinatários CC
+
+        # Enviando email para cada destinatário To e CC
+        for destinatario_email in destinatarios_to:
+            enviar_email(destinatario_email.strip(), f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=destinatarios_cc)
 
 print("E-mails enviados com sucesso!")
