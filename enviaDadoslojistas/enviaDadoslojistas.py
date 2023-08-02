@@ -39,7 +39,7 @@ corpo_email_html = """\
 <body>
     <p>Olá, [LOJISTA]!</p>
     <p>O veículo adquirido de placa [PLACA] e modelo [MODELO], encontra-se disponível para AGENDAMENTO E RETIRADA. Diante disso, pedimos que realize contato com o pátio para agendar a retirada do veículo.</p>
-    <p>O veículo encontra-se no PÁTIO:[PATIO]</p>
+    <p>O veículo encontra-se no PÁTIO: [PATIO]</p>
     <p>Endereço: [ENDERECO_PATIO]</p>
     <p>Telefone: [TELEFONE_PATIO]</p>
     <p>Responsável: [RESPONSAVEL_PATIO]</p>
@@ -55,11 +55,12 @@ corpo_email_html = """\
 </body>
 </html>
 """
+limite_tamanho_assunto = 500
 
 # Iterar sobre os dados da planilha e enviar os e-mails para cada lojista
 for lojista, lojista_data in df.groupby('LOJISTA'):
-    destinatarios = [lojista_data['EMAIL_LOJISTA'].iloc[0]]  # Usar o primeiro e-mail do lojista como destinatário
-    cc = lojista_data['EmailCC'].tolist()
+    destinatarios = lojista_data['EMAIL_LOJISTA'].explode().tolist()  # Lista de destinatários
+    cc = lojista_data['EmailCC'].explode().tolist() if 'EmailCC' in df.columns else []
 
     # Iterar sobre os carros do lojista e enviar e-mails individualmente
     for index, row in lojista_data.iterrows():
@@ -71,6 +72,9 @@ for lojista, lojista_data in df.groupby('LOJISTA'):
         responsavel_patio = row['RESPONSAVEL_PATIO']
 
         assunto = f"Orientações para Retirada de Veículo - Placa {placa} - NaPista"
+        if len(assunto) > limite_tamanho_assunto:
+            assunto = assunto[:limite_tamanho_assunto]
+
 
         # Substituir os espaços reservados no corpo do e-mail pelas informações do veículo
         corpo_email_html_preenchido = corpo_email_html.replace('[LOJISTA]', lojista)
