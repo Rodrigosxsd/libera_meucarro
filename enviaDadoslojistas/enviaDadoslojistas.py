@@ -17,8 +17,8 @@ def enviar_email_html(remetente, destinatarios, assunto, corpo_email, cc=None):
     # Configurar o servidor SMTP e enviar o e-mail
     host = 'smtp.gmail.com'  # Substitua pelo servidor SMTP do seu e-mail corporativo
     porta = 587
-    usuario = 'rodrigo.menezes@napista.com.br'  # Substitua pelo seu endereço de e-mail corporativo
-    senha = 'Ro055662400'  # Substitua pela senha do seu e-mail corporativo
+    usuario = 'xxxxxr'  # Substitua pelo seu endereço de e-mail corporativo
+    senha = 'xxxxxx'  # Substitua pela senha do seu e-mail corporativo
 
     context = ssl.create_default_context()
 
@@ -28,7 +28,7 @@ def enviar_email_html(remetente, destinatarios, assunto, corpo_email, cc=None):
         server.sendmail(remetente, destinatarios + cc if cc else destinatarios, mensagem.as_string())
 
 # Carregar os dados da planilha para um DataFrame do pandas
-df = pd.read_excel(r"E:\\libera_meucarro\dadoscoletados.xlsx")
+df = pd.read_excel(r"xxxxxxx\dadoscoletados.xlsx")
 
 # Endereço de e-mail do grupo que será utilizado como remetente
 email_remetente_grupo = 'bancos@napista.com.br'
