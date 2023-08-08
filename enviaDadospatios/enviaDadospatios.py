@@ -21,8 +21,8 @@ def enviar_email(remetente, destinatario, assunto, corpo_email, cc=None):
     host = 'smtp.gmail.com'
     porta = 587
 
-    usuario = 'rodrigo.menezes@napista.com.br'  # Substitua pelo seu endereço de email
-    senha = 'Ro055662400'  # Substitua pela sua senha
+    usuario = 'xxxx'  # Substitua pelo seu endereço de email
+    senha = 'xxxxxx'  # Substitua pela sua senha
 
     context = ssl.create_default_context()
 
