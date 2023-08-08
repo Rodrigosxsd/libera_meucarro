@@ -17,12 +17,12 @@ def criar_corpo_email(nome_patio, corpo_tabela):
     corpo_email += "</body></html>"
     return corpo_email
 
-def enviar_email(destinatario, assunto, corpo_email, cc=None):
+def enviar_email(remetente, destinatario, assunto, corpo_email, cc=None):
     host = 'smtp.gmail.com'
     porta = 587
 
-    usuario = 'xxxxxxxxxxxx'  # Substitua pelo seu e-mail
-    senha = 'xxxxxxxxxxxx'  # Substitua pela sua senha do e-mail
+    usuario = 'rodrigo.menezes@napista.com.br'  # Substitua pelo seu endereço de email
+    senha = 'Ro055662400'  # Substitua pela sua senha
 
     context = ssl.create_default_context()
 
@@ -34,7 +34,7 @@ def enviar_email(destinatario, assunto, corpo_email, cc=None):
     assunto = assunto[:limite_tamanho_assunto]
 
     mensagem = MIMEMultipart()
-    mensagem['From'] = usuario
+    mensagem['From'] = remetente  # Define o remetente como o endereço de email vinculado ao grupo
     mensagem['To'] = destinatario
     if cc:
         cc_str = ', '.join(cc)
@@ -64,6 +64,9 @@ if not set(colunas_exibir).issubset(dados.columns):
 # Agrupando os dados por pátio
 grupos_patio = dados.groupby('PATIO')
 
+# Endereço de email do grupo remetente
+email_remetente_grupo = 'atendimento@napista.com.br'
+
 # Iterando sobre cada grupo (cada pátio) e enviando os e-mails com os dados dos veículos correspondentes
 for nome_patio, grupo_dados in grupos_patio:
     corpo_tabela = criar_tabela_dados(grupo_dados)
@@ -79,6 +82,6 @@ for nome_patio, grupo_dados in grupos_patio:
         destinatarios_cc = ''
 
     # Enviando o e-mail para todos os destinatários To e CC de uma única vez
-    enviar_email(destinatarios_to, f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=destinatarios_cc)
+    enviar_email(email_remetente_grupo, destinatarios_to, f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=destinatarios_cc)
 
 print("E-mails enviados com sucesso!")
