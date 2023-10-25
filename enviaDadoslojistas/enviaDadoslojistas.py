@@ -17,8 +17,8 @@ def enviar_email_html(remetente, destinatarios, assunto, corpo_email, cc=None):
     # Configurar o servidor SMTP e enviar o e-mail
     host = 'smtp.gmail.com'  # Substitua pelo servidor SMTP do seu e-mail corporativo
     porta = 587
-    usuario = 'xxxxxxxxxx'  # Substitua pelo seu endereço de e-mail corporativo
-    senha = 'xxxxxxxxxxxxx'  # Substitua pela senha do seu e-mail corporativo
+    usuario = 'rodrigo.menezes@napista.com.br'  # Substitua pelo seu endereço de e-mail corporativo
+    senha = 'Ro055662400'  # Substitua pela senha do seu e-mail corporativo
 
     context = ssl.create_default_context()
 
@@ -33,7 +33,7 @@ def enviar_email_html(remetente, destinatarios, assunto, corpo_email, cc=None):
 df = pd.read_excel('E:\\libera_meucarro\dadoscoletados.xlsx')
 
 # Endereço de e-mail do grupo que será utilizado como remetente
-email_remetente_grupo = 'grupo_email@seuemailcorporativo.com'
+email_remetente_grupo = 'bancos@napista.com.br'
 
 # Corpo do e-mail em HTML com espaços reservados para as informações do veículo
 corpo_email_html = """\
@@ -46,6 +46,7 @@ corpo_email_html = """\
     <p>Telefone: [TELEFONE_PATIO]</p>
     <p>Responsável: [RESPONSAVEL_PATIO]</p>
     <p>Importante certificar, durante o contato para agendamento, se o veículo necessita de algum item para sua retirada (óleo, combustível, cabo para auxiliar bateria, bomba para encher pneu ou plataforma/guincho).</p>
+    <p><strong><span style="color: red;">Após a chegada ao pátio, o responsável pela retirada deverá assinar um termo de ciência, atestando que o veículo está de acordo com a descrição fornecida no laudo e concorda em assumir a responsabilidade por eventuais danos posteriores.</span></strong></p>
     <p>O DUT será enviado para o endereço sinalizado anteriormente, e não estará disponível na retirada do veículo.</p>
     <p>Mais uma vez agradecemos por usar a nossa plataforma.</p>
     <p>Com o NaPista é fácil de comprar!</p>
