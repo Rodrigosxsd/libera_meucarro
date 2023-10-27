@@ -4,84 +4,88 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-def criar_tabela_dados(dados):
-    colunas_exibir = ['PLACA', 'CHASSI', 'MODELO', 'PATIO', 'RESPONSAVEL', 'CPF', 'RG', 'TELEFONE']
-    tabela_formatada = dados[colunas_exibir].to_html(index=False, border=1, classes='dataframe')
-    return tabela_formatada
-
-def criar_corpo_email(nome_patio, corpo_tabela):
-    corpo_email = f"<html><body><p style='font-size:16px'>Bom dia,</p>"
-    corpo_email += f"<p style='font-size:16px'>Seguem os dados do responsável pela retirada do veículo vendido no pátio {nome_patio}.</p>"
-    corpo_email += "<p style='font-size:16px'>O lojista será orientado a entrar em contato para realizar agendamento.</p>"
-    corpo_email += corpo_tabela
-    corpo_email += "</body></html>"
-    return corpo_email
-
-def enviar_email(remetente, destinatario, assunto, corpo_email, cc=None):
-    host = 'smtp.gmail.com'
-    porta = 587
-
-    usuario = 'xxxx'  # Substitua pelo seu endereço de email
-    senha = 'xxxxxx'  # Substitua pela sua senha
-
-    context = ssl.create_default_context()
-
-    server = smtplib.SMTP(host, porta)
-    server.starttls(context=context)
-    server.login(usuario, senha)
-
-    limite_tamanho_assunto = 500
-    assunto = assunto[:limite_tamanho_assunto]
-
+def enviar_email_html(remetente, destinatarios, assunto, corpo_email, cc=None):
     mensagem = MIMEMultipart()
-    mensagem['From'] = remetente  # Define o remetente como o endereço de email vinculado ao grupo
-    mensagem['To'] = destinatario
+    mensagem['From'] = remetente
+    mensagem['To'] = ', '.join(destinatarios)
     if cc:
         cc_str = ', '.join(cc)
         mensagem['Cc'] = cc_str
-        # Remove os destinatários e cópias do corpo do e-mail
-        corpo_email = corpo_email.replace(destinatario, '').replace(cc_str, '')
     mensagem['Subject'] = assunto
     mensagem.attach(MIMEText(corpo_email, 'html'))
-    server.sendmail(usuario, [destinatario] + cc.split(',') if cc else [], mensagem.as_string())
 
-    server.quit()
+    # Configurar o servidor SMTP e enviar o e-mail
+    host = 'smtp.gmail.com'  # Substitua pelo servidor SMTP do seu e-mail corporativo
+    porta = 587
+    usuario = 'rodrigo.menezes@napista.com.br'  # Substitua pelo seu endereço de e-mail corporativo
+    senha = 'Ro055662400'  # Substitua pela senha do seu e-mail corporativo
 
-def limpar_espacos_brancos(emails):
-    # Função para remover espaços extras de cada e-mail
-    emails_limpos = [email.strip() for email in emails.split(',')]
-    return ','.join(emails_limpos)
+    context = ssl.create_default_context()
 
-# Carregando os dados da planilha usando o pandas
-dados = pd.read_excel(r"E:\\libera_meucarro\dadoscoletados.xlsx")
+    with smtplib.SMTP(host, porta) as server:
+        server.starttls(context=context)
+        server.login(usuario, senha)
+        destinatarios = destinatarios if destinatarios else []  # Caso não exista destinatários, criar uma lista vazia
+        cc = cc if cc else []  # Caso não exista cc, criar uma lista vazia
+        server.sendmail(remetente, destinatarios + cc, mensagem.as_string())
 
-# Verificando se todas as colunas desejadas estão presentes no DataFrame
-colunas_exibir = ['PLACA', 'CHASSI', 'MODELO', 'PATIO', 'RESPONSAVEL', 'CPF', 'RG', 'TELEFONE']
-if not set(colunas_exibir).issubset(dados.columns):
-    colunas_faltando = set(colunas_exibir) - set(dados.columns)
-    raise ValueError(f"Algumas colunas desejadas não estão presentes no DataFrame: {colunas_faltando}")
+# Carregar os dados da planilha para um DataFrame do pandas
+df = pd.read_excel('E:\\libera_meucarro\dadoscoletados.xlsx')
 
-# Agrupando os dados por pátio
-grupos_patio = dados.groupby('PATIO')
+# Endereço de e-mail do grupo que será utilizado como remetente
+email_remetente_grupo = 'bancos@napista.com.br'
 
-# Endereço de email do grupo remetente
-email_remetente_grupo = 'atendimento@napista.com.br'
+# Corpo do e-mail em HTML com espaços reservados para as informações do veículo
+corpo_email_html = """\
+<html>
+<body>
+    <p>Olá, [LOJISTA]!</p>
+    <p>O veículo adquirido de placa [PLACA] e modelo [MODELO], encontra-se disponível para AGENDAMENTO E RETIRADA. Diante disso, pedimos que realize contato com o pátio para agendar a retirada do veículo.</p>
+    <p>O veículo encontra-se no PÁTIO:</p>
+    <p>Endereço: [ENDERECO_PATIO]</p>
+    <p>Telefone: [TELEFONE_PATIO]</p>
+    <p>Responsável: [RESPONSAVEL_PATIO]</p>
+    <p>Importante certificar, durante o contato para agendamento, se o veículo necessita de algum item para sua retirada (óleo, combustível, cabo para auxiliar bateria, bomba para encher pneu ou plataforma/guincho).</p>
+    <p><strong><span style="color: red;">Após a chegada ao pátio, o responsável pela retirada deverá assinar um termo de ciência, atestando que o veículo está de acordo com a descrição fornecida no laudo e concorda em assumir a responsabilidade por eventuais danos posteriores.</span></strong></p>
+    <p>O DUT será enviado para o endereço sinalizado anteriormente, e não estará disponível na retirada do veículo.</p>
+    <p>Mais uma vez agradecemos por usar a nossa plataforma.</p>
+    <p>Com o NaPista é fácil de comprar!</p>
+    <p>Atendimento naPista</p>
+    <p>E-mail: bancos@napista.com.br</p>
+    <p>Site: <a href="https://www.napista.com.br/">https://www.napista.com.br/</a></p>
+    <p>Instagram: @napistapp</p>
+</body>
+</html>
+"""
 
-# Iterando sobre cada grupo (cada pátio) e enviando os e-mails com os dados dos veículos correspondentes
-for nome_patio, grupo_dados in grupos_patio:
-    corpo_tabela = criar_tabela_dados(grupo_dados)
-    corpo_email = criar_corpo_email(nome_patio, corpo_tabela)
+# Definir o limite máximo para o tamanho do assunto do e-mail (em caracteres)
+limite_tamanho_assunto = 500
 
-    # Coletando todos os e-mails da coluna 'EmailTo' em uma única string
-    destinatarios_to = ','.join(grupo_dados['EmailTo'].apply(limpar_espacos_brancos))
+# Iterar sobre os dados da planilha e enviar os e-mails para cada lojista
+for lojista, lojista_data in df.groupby('LOJISTA'):
+    for index, row in lojista_data.iterrows():
+        # Preencher as informações do veículo no corpo do e-mail com o tratamento strip()
+        corpo_email_preenchido = corpo_email_html.replace('[LOJISTA]', lojista.strip())
+        corpo_email_preenchido = corpo_email_preenchido.replace('[PLACA]', row['PLACA'].strip())
+        corpo_email_preenchido = corpo_email_preenchido.replace('[MODELO]', row['MODELO'].strip())
+        corpo_email_preenchido = corpo_email_preenchido.replace('[ENDERECO_PATIO]', row['ENDERECO_PATIO'].strip())
+        corpo_email_preenchido = corpo_email_preenchido.replace('[TELEFONE_PATIO]', str(row['TELEFONE_PATIO']).strip())
+        corpo_email_preenchido = corpo_email_preenchido.replace('[RESPONSAVEL_PATIO]', row['LOJISTA'].strip()) # Substituir 'RESPONSAVEL_PATIO' por 'LOJISTA'
 
-    # Verificando se há e-mails CC
-    if 'EmailCC' in dados.columns:
-        destinatarios_cc = ','.join(grupo_dados['EmailCC'].apply(limpar_espacos_brancos))
-    else:
-        destinatarios_cc = ''
+        # Montar o assunto do e-mail
+        assunto = f"Orientações para Retirada de Veículo - Placa {row['PLACA'].strip()} - NaPista"
 
-    # Enviando o e-mail para todos os destinatários To e CC de uma única vez
-    enviar_email(email_remetente_grupo, destinatarios_to, f"Dados de Responsáveis pela retirada de veículos - {nome_patio} - naPista", corpo_email, cc=destinatarios_cc)
+        # Limitar o tamanho do assunto
+        if len(assunto) > limite_tamanho_assunto:
+            assunto = assunto[:limite_tamanho_assunto]
 
-print("E-mails enviados com sucesso!")
+        # Separar os e-mails em cópia (CC) se houver mais de um e-mail
+        email_cc_list = row['Emailscard'].split(',') if pd.notnull(row['Emailscard']) else []
+
+        # Separar os e-mails de destinatários se houver mais de um e-mail
+        destinatarios_list = row['EMAIL_LOJISTA'].split(',') if pd.notnull(row['EMAIL_LOJISTA']) else []
+
+        # Enviar e-mail para o lojista com as informações do veículo
+        enviar_email_html(email_remetente_grupo, destinatarios_list, assunto, corpo_email_preenchido, cc=email_cc_list)
+
+print("Emails enviados para os Lojistas!")
